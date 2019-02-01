@@ -1,0 +1,538 @@
+\documentclass[12pt]{article}
+\usepackage{fancyhdr} % Required for custom headers
+\usepackage{lastpage} % Required to determine the last page for the footer
+%\usepackage{extramarks} % Required for headers and footers
+\usepackage[usenames,dvipsnames]{color} % Required for custom colors
+\usepackage{graphicx} % Required to insert images
+\usepackage{listings} % Required for insertion of code
+\usepackage{courier} % Required for the courier font
+\usepackage{lipsum} % Used for inserting dummy 'Lorem ipsum' text into the template
+\usepackage{enumerate}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{dsfont}
+\usepackage[super]{nth}
+\usepackage{enumitem}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{amsthm} % Used for create theorems and lemmas environments
+\linespread{1.5}
+%\newlength\tindent
+%\setlength{\tindent}{\parindent}
+\setlength{\parindent}{0pt}
+
+	% Margins
+	\topmargin=-0.45in
+	\evensidemargin=0in
+	\oddsidemargin=0in
+	\textwidth=6.5in
+	\textheight=9.0in
+	\headsep=0.25in
+
+% Set up the header and footer
+%\pagestyle{fancy}
+
+
+
+
+\begin{document}
+\begin{center}
+\LARGE
+\bf{Property Price Analysis}
+\\[.2in]
+\normalsize
+by
+\\[.2in]
+Mengnan Qi (Zayden)
+\\
+PSTAT220A
+\\[.2in]
+Department of Probability and Statistics\\
+University of California, Santa Barbara
+\\[.6in]
+Abstract
+\\[.2in]
+\end{center}
+Linear regression models are widely used today in business administration, economics, engineering, and the social, health, and biological sciences. In this report, we apply linear regression to property price in a particular city to see what other variables that can explain it. We fit the model using p-value method, AIC selection criterion, and Mallow's CP combined with adjusted $R^2$. Of course we follow principle of parsimony, if two models explain the data about equally well, choose
+the simpler one. We also utilize models residuals to check miss terms, model assumptions, and influential observations. At the end, we select 2 model candidates in which we think is the best model given the data set. We interpret the parameter estimates include higher order term. Future works are also discussed to future improve the findings of relationship of property price to other unknowns. 
+\pagebreak
+
+
+\section{Introduction}
+Regression analysis is a statistical technique for investigating and modeling the relationship between variables. Applications of regression are numerous and occur in almost every field. Its broad appeal and usefulness result from the conceptually logical process of using an equation to express the relationship between a variable of interest (the response) and a set of related predictor variables (the covariates). In this report, we construct models to explain how property price for sale in a particular city is influenced by a set of other variables. We start by explaining the raw data set, including variable distribution and possible correlations. Then we explain the methods of linear regression to construct our models, methods including p-value selection, AIC comparison, and graphical analysis.  At the end, we will present models result and models diagnostics. Furthermore, we will discuss future works on this topic. 
+
+\section{Data}
+The raw data provided for this analysis contains 83 property price observations associated 4 other covariates. Table 1 summarizes the detailed descriptions of the variables. 
+\begin{table}[!htb] 
+\begin{center}
+ \begin{tabular}{||c c c||} 
+ \hline
+ Variable & Description & Unit  \\ [0.5ex] 
+ \hline\hline
+ size & size the property & square meters \\ 
+ \hline
+ age &  age of the property & years  \\
+ \hline
+ dc & distance from the property to the city center & km  \\
+ \hline
+ dt & distance from the property & km \\
+ \hline
+ price & the listed price of the property & thousands of dollars\\ [1ex] 
+ \hline
+\end{tabular}
+\caption{Variable Description}
+\end{center}
+\label{fig:test}
+\end{table}
+\subsection{Variable Distribution}
+Knowing the distribution of variables helps in the diagnostic step, as well as considering the assumptions of linear models. 
+Figure 1 presents the distributions of variables in histograms. 
+\begin{figure}[H]
+\centering
+\includegraphics[width=1\columnwidth]{hist.pdf} 
+\caption{Variables Distribution}
+\end{figure}
+
+\begin{table}[!htb] 
+\begin{center}
+ \begin{tabular}{||c c c c c c c||} 
+ \hline
+variable & min & 1st quartile &  median & mean  & 3rd quartile & max  \\ [0.2ex] 
+\hline
+price & 311.6 &486.7 & 589.9 & 600 & 691.4 & 1005.5\\  
+\hline
+size & 69.3 & 86.1 & 101.6 & 99.06 & 111 & 134.8\\  
+ \hline
+age & 2.2 & 4.3 & 8.8 & 11.94 & 16.85 & 49.7\\  
+ \hline
+dc & 0.3 & 9.8 & 13.9 & 14.14 & 18 & 29\\  
+ \hline
+dt & 3.1 & 18.85 & 31.2 & 34.02 & 49.3 & 74.2\\  
+ \hline
+\end{tabular}
+\caption{Variable Statistics}
+\end{center}
+\label{fig:test}
+\end{table}
+
+Looking at the variables statistics and histograms, all numbers have common sense for each variable, we can assume there is no outlier. We can also see that distributions of size, distance from city center, and distance from a toxic waste disposal site are approximately symmetric. But distributions of age and price are right skewed. 
+
+\subsection{Collinearity}
+Checking correlations between each variable is important for linear regression. In some situations the regressors are nearly perfectly correlated, and in such cases the inferences based on the regression model can be misleading. One way to check correlation is to see the correlation coefficient for each pair of variables. 
+Table 3 presents the pairwise correlations between all variables. We find no strong correlations between any pair.
+\begin{table}[H]
+\begin{center}
+ \begin{tabular}{||c c c c c c ||} 
+ \hline
+ & size &        age &        dc  &        dt &     price\\
+\hline
+size &  1.00000000 & 0.07932014& -0.5317112 & 0.11681909 & 0.5387668\\
+\hline
+age &   0.07932014&  1.00000000& -0.2116562 & 0.08380487 &-0.1447758\\
+\hline
+dc  &  -0.53171123& -0.21165625&  1.0000000& -0.31049389& -0.1224326\\
+\hline
+dt   &  0.11681909&  0.08380487& -0.3104939&  1.00000000& -0.4227775\\
+\hline
+price & 0.53876682& -0.14477576 &-0.1224326& -0.42277748  &1.0000000\\
+ \hline
+\end{tabular}
+\caption{Pairwise Correlation}
+\end{center}
+\label{fig:test}
+\end{table}
+
+\section{Methods}
+A regression model that involves more than one regressor variable is multiple regression model.  A typical linear model has the form 
+\begin{align}
+ y &= \beta_0+\beta_1 x_1 + \beta_2 x_2 + ... + \beta_k x_k+\epsilon\
+\end{align}
+As mentioned early, the response $y$ may be related to k covariates. Each error, $\epsilon$ is a normally distributed random variable with mean 0 and variance $\sigma^2$. The parameters $\beta's$ are the regression coefficients. One parameter $\beta_i$ represents the expected change in the response $y$ per unit change in $x_i$ when all of the remaining covariates $x_j$ $(i \ne j)$ are held constant.  This is sometimes called ceteris paribus effect. Some important assumptions for linear models are:
+\begin{enumerate}
+\item{The mean is a linear combination of the covariates}
+\item
+\text{All responses are uncorrelated} 	
+\item
+\text{Each component of the random variable is assumed to have a common variance.}
+\item
+\text{Residuals are normally distritbuted}
+\end{enumerate}
+Our interest is to find out what set of covariates best explain the response variable. The method of least squares can be used to estimate the regression coefficients in equation (1). This principle is to minimize the summation of square error. We use several methods to find a set of covariates that explains property price best. After obtaining a model, we perform diagnostic for the model to determine model adequacy, higher order terms, interactions, and influential points.
+
+\subsection{p-value method}
+A straight forward way of finding a good model is p-value method. 
+We start by including all given covariates in a model to regress property price. In other words, we have the model
+\begin{align}
+ price_i &= \beta_0+\beta_1 size_i + \beta_2 age_i + \beta_3 dc_i + \beta_4 dt_i+\epsilon\, \quad \text{for i}=1,2,...,83
+\end{align}
+We first check if the property price is constant. The logic behind is performing a F-test to see whether
+\begin{align*}
+\beta_1=\beta_2=\beta_3=\beta_4=0
+\end{align*}
+If F-test is passed,  we use t-test for each individual $\beta$, to check whether
+\begin{align*}
+\beta_i=0 \quad \text{for i}=1,2,3,4
+\end{align*}
+if the test result is significant, we can eliminate that covariate and fit again until all the covariates are significant. 
+
+\subsection{AIC method}
+The goal is to identify a subset of covariates such that certain criterion (e.g. AIC) are minimized. AIC is a measure of compromise between goodness of fit and model complexity. The smaller AIC is, the better our model is. There are 3 stepwise procedures, 
+\begin{itemize}
+\item
+Forward addition. Start with some or no covariate, then add one variable according to some criterion, it stops when no variables need to be added.
+\item
+Backward elimination. Start with a model contains all covariates, then eliminate one variables according to some criterion, it stops when no variables need to be dropped.
+\item
+Stepwise regression, the combination of forward addition and backward elimination.
+
+\end{itemize}
+
+\subsection{Mallow's Cp and Adjuested $R^2$}
+The Mallow's Cp criterion is defined as 
+\begin{align*}
+Cp &=RSS/\sigma^2 + 2k - n
+\end{align*}
+ Where $RSS$ is the residual sum of squares, i.e., the sum of squares of actual $y$ and fitted $\hat{y}$, and k is the number of parameters, n is number of observations. A good model will have $Cp$ about the same as $k$, for small $k$ so we will check this by plotting $Cp$ and $k$ for each model.\\
+\\
+$R^2$ is the coefficient of determination that tells what percentage of variation of the response is explained by the set of covariates. Adjusted $R^2$ is a modification of $R^2$ that adjusts for the number of independent variables in a model. There are distinct differences between the two $R^2$. When a variable is added to the model, $R^2$ always increases while adjusted $R^2$ can increase or decrease. Unlike $R^2$, adjusted $R^2$ increases only if the new term improves the model more than would be expected by chance. Adjusted $R^2$ can be negative, and will always be less than or equal to $R^2$. As a result, adjusted $R^2$ can use with Mallow's Cp to determine the set of covariates. 
+
+\subsection{Diagnostics}
+After obtaining the happy model, we need to perform diagnostics analysis to check the model assumptions and other missing terms. The main tool is to utilize model residuals. \\
+
+For most residual plots, any pattern of non-randomness that is detectable in the residuals provides evidence of some form of departure from the assumed model.
+To check systematic departure, we can plot
+\begin{itemize}
+\item
+QQ-plot for checking normality assumption and outliers
+\item
+Plot residuals vs. fitted values for checking constant variance,
+outliers and inadequacy of the model
+\item
+Plot residuals vs. covariates to look for systematic trend, if exists it indicate missing covariates such as missing high order terms.
+\item
+Plot of leverages and Cook’s distances. Look for influential points.
+
+\end{itemize}
+We can also use added variable plot to look for outliers and influential observations. Partial residual plots also helps in determining higher order terms. If high influential points are detected, we can try to fit the model with influential points removed. 
+
+\section{Results}
+\subsection{p-value model}
+After fitting all covariates, we find that variable $dc$ has a t-test p-value of $0.7565$, we then eliminate it in the new model. In the new model, covariates size, age, and dt are all significant. We therefore obtain the p-value model as
+\begin{align}
+price = 185.11 + 5.78 * size - 2.45 * age - 3.77 *dt
+\end{align}
+
+\subsection{AIC Models}
+Using all three methods in section 3.3, we obtain the same model as p-value model.
+
+\subsection{Mallow's Cp and Adjusted $R^2$ Model}
+Since there are only 4 covariates given for this analysis, we can first exhaustively search all the linear models of a set of covariates from 1 to 4. Then we find out the best model for each fixed number of covariates. Table 4 shows the linear models
+\begin{table}[H]
+\begin{center}
+ \begin{tabular}{||c c||} 
+ \hline
+number of covariates & covariates \\
+\hline
+1 &  size \\
+\hline
+2 &   size, dt \\
+\hline
+3  & size, age, dt \\
+\hline
+4 & size, age, dt, dc\\
+\hline
+\end{tabular}
+\caption{Models for different number of covariates}
+\end{center}
+\label{fig:test}
+\end{table} 
+In Figure 2, we look at Mallow's Cp and adjusted $R^2$ to find the best number of covariates to explain property price.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\columnwidth]{cp_adjustedR.pdf} 
+\caption{Mallow's Cp and Adjusted $R^2$}
+\end{figure}
+We can see that the smallest p such that the dot is
+close to the diagonal line Cp=p is 4. In the adjusted $R^2$ plot, when the model has 4 parameters, the adjusted $R^2$ is the largest. So we choose the model with 4 parameter, or equivalently, with 3 covariates including the intercept parameter. The 3 covariates are size, age, dt. This is the same as p-value model and AIC model.
+
+\subsection{Diagnostics}
+Our model candidate is equation (3). We need to check the diagnostics to see if the model is adequate, if not, we can improve the model from diagnostics. 
+\subsubsection{Residuals Plot}
+QQ-plot of residuals is used to check normality and Residual vs fitted plot is used for checking constant variance. Standard residuals helps when non-constant residual variance exist. Absolute residuals check the residual variance from just the positive values.
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\columnwidth]{fit2_resid.pdf} 
+\caption{Residuals Plot}
+\end{figure}
+Looking at QQ-plot of residuals in Figure 5, we find that the dots fall approximately well onto the straight line. We observe some deviation at the left end of the line. But in general, the normality assumption holds. Also from residuals vs. fitted plot, variance of residuals does not increase much or decrease much when the fitted value increases or decreases, so we can assume constant variance assumption holds also. 
+
+\subsubsection{Influential Points}
+We use Cook's statistic/distance and leverage to find influential points. Note that leverage depends on covariates only whereas Cook’s distance depends also on responses which is a more direct measure. Plot leverage and Cook's statistic we can easily spot possible influential point because larger leverage and Cook’s distance suggest greater influence. From Figure 4, we see that observation 51 might be a influential points since it has much larger leverage than the rest of the data and relatively large Cook’s statistic.
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\columnwidth]{fit2_lev_cook.pdf} 
+\caption{Cook's statistic and Leverage}
+\end{figure}
+
+\subsubsection{Higher order terms}
+
+Partial residual plot present a roughly straight line if the model is correct. Nonlinear pattern suggests a higher order term or a transformation. In Figure 5, we check the partial residuals for each of the covariates. 
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\columnwidth]{fit2_partial_resid.pdf} 
+\caption{Partial Residual plot for model covariates}
+\end{figure}
+
+The red lines show the smoothed trend of the partial residuals for each coariates. We can see in Figure 7(b) that the trend age residuals is a quadric curve, indicating that relationship between age and price is not linear, higher order term of age may need to be added to the model. For (a) and (c), there are both roughly linear patterns, especially for (a), in which the dots fall fairly well into a straight line. Now we add order 2 of covariate age to out model candidate, the new model is
+\begin{align*}
+ price_i &= \beta_0+\beta_1 size_i + \beta_2 age_i + \beta_3 dt_i + \beta_4 age_i^2+\epsilon\ , \quad \text{for i}=1,2,...,83
+\end{align*}
+We fit this model and obtain the parameter estimates for the $\beta 's$, the model becomes
+\begin{align}
+ price_i &= 161.49859 +5.68268size +4.73900age -4.05298dt -0.18762age^2
+\end{align}
+
+The t-test for this model shows all covariates are significant except age, but since we added higher order of age, we do not eliminate the lower order of the same variable. 
+
+
+\subsection{Higher Order Model Diagnostics}
+We repeat section 4.4.1 and 4.4.2 for this new higher order model. 
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\columnwidth]{fit21_resid.pdf} 
+\caption{Higher Order Model Residual Plot}
+\end{figure}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\columnwidth]{fit21_lev_cook.pdf} 
+\caption{Leverage and Cook's Statistics of Higher Order Model}
+\end{figure}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\columnwidth]{fit21_change_in_coef.pdf} 
+\caption{Change in Coefficients of the 4 Covariates in the Higher Order Model}
+\end{figure}
+Using the the logic in section 4.4.1 and 4.4.2, from Figure 6, the residual plot, we find constant variance and roughly normal distribution of residuals. In Figure 7, we find observation 51 is again the influential point. In Figure 8, we check to see if the plot are concentrated around 0-axis, if so we assume there is no influential point. But again, observation 51 is influential. We remove observation 51 and to see if it improves the model.
+
+\subsection{Remove Influential Point in Higher Order Model}
+Our model does not change, it is still
+\begin{align*}
+ price_i &= \beta_0+\beta_1 size_i + \beta_2 age_i + \beta_3 dt_i + \beta_4 age_i^2+\epsilon\ ,
+\end{align*}
+but now we remove observation 51, so i=1,2,...,50,52,...,83 now. Fit this model on the reduced the data set, we obtain the parameter estimates as
+\begin{align}
+ price = 159.8818+ 5.5688size+ 7.0964 age - 3.9879dt -0.2724 age^2
+\end{align}
+We again repeat 4.4.1 and 4.4.2 for diagnostics of this model. 
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\columnwidth]{fit22_resid.pdf} 
+\caption{Redisuals of Model/Equation (5)}
+\end{figure}
+The residual plots in Figure 9 look better, especially that the variance of residual is more constant. We will summarize all the model statistics at the end of this section including adjusted $R^2$ to see how much the model has been improved. In Figure 10, we plot the leverage and Cook's Statistics again to see if there is more obvious influential point. Although we find observation 22 is still far away from the rest of data points, but compare to observation 51, it is actual not that far away, so we assume there is no more influential points. 
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\columnwidth]{fit22_lev_cook.pdf} 
+\caption{Leverage and Cook's Statistic of Model/Equation (5)}
+\end{figure}
+
+\subsection{Models Summary}
+So far, we introduced 3 models, model (3), model (4), and model (5). We summarize these 5 models using adjusted $R^2$ to tell how the model was improved.
+\begin{table}[H]
+\begin{center}
+ \begin{tabular}{||c c c c||} 
+ \hline
+ & Adjusted $R^2$ & Covariates & Observations\\
+\hline
+Model (3) & 0.5355 & size, age, dt & 1,2,...,83\\
+\hline
+Model (4) & 0.5589 & size, age, dt, $age^2$ & 1,2,...,83\\
+\hline
+Model (5) & 0.5642 &size, age, dt, $age^2$  & 1,2,...,50,52,...,83\\
+\hline
+\end{tabular}
+\caption{Model Comparsion}
+\end{center}
+\label{fig:test}
+\end{table}
+We see that removing influential point did not improve the model as much as adding higher order term. We choose model (4) and model (5) as our final candidates. 
+
+\section{Model Intepretation and Conclusion}
+As discussed in section 4.7, we have 2 model candidates. 
+\begin{align*}
+\text{Model (4)} \quad  price &= 161.49859 +5.68268size +4.73900age -4.05298dt -0.18762age^2, \\
+\text{for i}&=1,2,...,83
+\end{align*}
+
+\begin{align*}
+\text{Model (5)} \quad   price &= 159.8818+ 5.5688size+ 7.0964 age - 3.9879dt -0.2724 age^2 \\
+\text{for i}&=1,2,...,50,52,...,83 
+\end{align*}
+The interpretation is little different for higher order terms, but for other first order terms except age, we conclude model (4) such that
+\begin{itemize}
+\item
+When age and dt are fixed, with every square meter increase in property size, the property price is expected to increase 5.68268 thousand dollars. 
+\item
+When size and age are fixed, with every km increase in distance from the property to a toxic waste disposal site, the property price is expected to drop 4.05298 thousand dollars
+\end{itemize}
+Model (5) have the same signs of parameter estimates, so the interpretations are the same except the actual estimates are bit different.
+When size and dt are fixed, the relationship between price and age of property is quadratic. For example, in model (5), we take the 1st derivative with respect to the coefficient parameter of first order age of the model equation, 
+\begin{align*}
+\frac{\delta price}{\delta age}=7.0964-2*0.2724*age
+\end{align*}
+Set it equal to 0 we find the turning point to be $age=-13.02$. That is, age has a positive effect on price until the turning point is reached, beyond this turning point, age has a negative effect on price. Then the ceteris paribus effect between age and price is
+\begin{align*}
+\Delta y=(7.0964-2*0.2724*age)\Delta x
+\end{align*}
+Look at the interpretation, the interpretation of dt parameter is a bit confusing. Being close to waste disposal site is certainly not good, but this negative effect is diminishing, since the smell of other chemical poison can reach to a certain distance, once this distance is reached, the further the property location does not have increased positive effect. So the negative coefficient estimate need to explanation once there are more lurking variables included. Newly built property does not necessary means good. There are potential problems such as chemical residuals from construction of the property as well as other potential set up for new property. So relationship between age and price make sense. \\
+To choose whether to include the influential point or not, one can decide with more model selection procedures such as predictive error. We will talk more about future works in the next section.
+
+\section{Future Works}
+Property price should be complicated to explain since logically there are so many factors that affect the price. For this analysis, we are only given 4 covariates, there are certainly other lurking variables such as shopping access, area environment, and school ratings around the property. \\
+More observations also helps in determining what affect property price. We can preserve a prediction set to test our models. By comparing the prediction error, we have a much stronger idea of adequacy of our regression models. 
+
+\section{Appendix}
+\footnotesize
+\begin{verbatim}
+data<-read.table("http://www.pstat.ucsb.edu/faculty/yuedong/classes/data/property.txt",
+           header=T)
+str(data)
+cor(data)  # no strong correlation
+library(MASS)
+attach(data)
+pairs(data) # pair linear relationship
+summary(data)
+par(mfrow=c(1,5))
+#histogram of variables
+hist(price)
+hist(size)
+hist(age)
+hist(dc)
+hist(dt)
+
+
+residual.plot<-function(fit){
+  par(mfrow=c(2,2))
+  qqnorm(fitted(fit),ylab="Residuals",main="QQ-plot of residuals")
+  qqline(fitted(fit))
+  qqnorm(rstandard(fit), ylab="Residuals",main="QQ-plot of standarized residuals")
+  qqline(rstandard(fit))
+  plot(fitted(fit),resid(fit),xlab="Fitted",
+       ylab="Residuals",main="Residuals vs. Fitted")
+  abline(h=0)
+  plot(fitted(fit), abs(residuals(fit)), xlab="Fitted",
+       ylab="Absolute residuals",main="Absolute residuals vs fitted")
+  abline(h=0)
+}
+# 1st fit
+fit1<-lm(price~.,data=data)
+summary(fit1)
+residual.plot(fit1)
+fit1.2<-lm(price~.-dc,data=data)
+summary(fit1.2)
+# 2nd fit
+fit2<-lm(price~.-dc,data=data)
+summary(fit2)
+
+residual.plot(fit2)
+boxcox(fit2,plotit=T,lambda=seq(-.5,1.5,len=100))
+
+par(mfrow=c(1,2))
+h<-hatvalues(fit2)
+plot(h,ylab="leverage")
+identify(h,n=1)
+
+cd<-cooks.distance(fit2)
+plot(h/(1-h),cd,ylab="Cook Statistic")
+identify(h/(1-h),cd,n=1)
+
+# test outliers
+library(car)
+outlierTest(fit2)
+
+#AIC
+#(1)forward 
+step(lm(price~1,data=data),scope=list(upper=formula(fit1)),direction="forward") 
+#(2)backward
+step(fit1,direction="backward")
+#(3)both
+step(fit1,direction="both")
+
+#Mallow's Cp & adjusted R-square
+library(leaps) 
+a<-regsubsets(formula(fit1),data=data,method="exhaustive")
+(rs<-summary(a))
+par(mfrow=c(1,2))
+plot(x=2:5,rs$cp,xlab="p (Number of parameters)",ylab="Cp statistic", main="Cp statistic vs p")
+abline(0,1)
+plot(2:5,rs$adjr2,xlab="p (number of parameters)",ylab="Adjusted R-square",
+     main="Adjusted R-square")
+#partial residual plots
+par(mfrow=c(1,3))
+pr<-residuals(fit2)+coef(fit2)[1]*data[,1] 
+plot(data[,1],pr,xlab=names(data)[1], ylab="Partial residuals",main="(a)")
+abline(0,coef(fit2)[1]) 
+lines(lowess(data[,1],pr),col="red",lty=2)
+pr<-residuals(fit2)+coef(fit2)[2]*data[,2] 
+plot(data[,2],pr,xlab=names(data)[2], ylab="Partial residuals",main="(b)")
+abline(0,coef(fit2)[2])
+lines(lowess(data[,2],pr),col="red",lty=2)
+pr<-residuals(fit2)+coef(fit2)[4]*data[,4] 
+plot(data[,4],pr,xlab=names(data)[4], ylab="Partial residuals",main="(c)") 
+abline(0,coef(fit2)[4]) 
+lines(lowess(data[,4],pr),col="red",lty=2)
+#add higher order terms of age
+fit2.1<-update(fit2,.~.+I(age^2))
+summary(fit2.1)
+#residual plots
+residual.plot(fit2.1)
+#influential points
+
+#plot for leverages and Cook's statistic
+par(mfrow=c(1,2))
+h<-hatvalues(fit2.1)
+plot(h,ylab="leverage")
+identify(h,n=1)
+
+cd<-cooks.distance(fit2.1)
+plot(h/(1-h),cd,ylab="Cook Statistic")
+identify(h/(1-h),cd,n=1)
+#plot change in coef
+par(mfrow=c(2,2))
+fit2.1inf<-influence(fit2.1)
+#plot change in size coef
+plot(fit2.1inf$coef[,2],ylab="Change in size coef",main="(a)")
+abline(h=0)
+#plot change in dt coef
+plot(fit2.1inf$coef[,4],ylab="Change in dt coef",main="(b)")
+abline(h=0)
+#plot change in age coef
+plot(fit2.1inf$coef[,3],ylab="Change in age coef",main="(c)") 
+identify(fit2.1inf$coef[,3],n=1)
+abline(h=0)
+#plot change in age^2 coef
+plot(fit2.1inf$coef[,5],ylab="Change in age^2 coef",main="(d)") 
+identify(fit2.1inf$coef[,5],n=1)
+abline(h=0)
+
+# 3rd fit
+fit2.2<-lm(price~size+age+dt+I(age^2),data=data[-51,])
+summary(fit2.2)
+residual.plot(fit2.2)
+
+par(mfrow=c(1,2))
+h<-hatvalues(fit2.2)
+plot(h,ylab="leverage")
+identify(h,n=1)
+
+cd<-cooks.distance(fit2.2)
+plot(h/(1-h),cd,ylab="Cook Statistic")
+identify(h/(1-h),cd,n=1)
+\end{verbatim}
+\normalsize
+
+\end{document}\\
